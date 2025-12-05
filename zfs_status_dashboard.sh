@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # ZFS + DISK HEALTH DASHBOARD
-# Vérification complète : SMART, ZFS, erreurs, usage, snapshots
+# Vérification complète : SMART, ZFS, erreurs, usage, snapshots, scrub optionnel
 # ============================================================
 
 POOL="backuppool"
@@ -140,6 +140,22 @@ header "RESET ERROR COUNTERS"
 
 zpool clear $POOL
 echo -e "${GREEN}✔ zpool clear effectué (compteurs remis à zéro)${NC}"
+
+
+# ============================================================
+# 12. SCRUB AUTOMATIQUE — exécution conditionnelle
+# ============================================================
+header "SCRUB AUTOMATIC OPTION"
+
+read -p "Voulez-vous lancer un scrub complet maintenant ? (o/n) : " REP
+
+if [[ "$REP" =~ ^[Oo]$ ]]; then
+    echo -e "${YELLOW}⚡ Lancement du scrub sur le pool $POOL...${NC}"
+    zpool scrub $POOL
+    echo -e "${GREEN}✔ Scrub lancé. Vérifiez l'avancement avec 'zpool status $POOL'.${NC}"
+else
+    echo -e "${BLUE}✔ Scrub non lancé.${NC}"
+fi
 
 
 # ============================================================
