@@ -4,23 +4,23 @@ echo "=== Activation du support HEVC / HEIF sous CachyOS + KDE ==="
 
 # Mise à jour
 echo "[1/5] Mise à jour des paquets..."
-sudo pacman -Sy --noconfirm
+sudo pacman -Syu
 
 # Installation HEVC
 echo "[2/5] Installation des codecs HEVC (H.265)..."
-sudo pacman -S --noconfirm ffmpeg x265
+sudo pacman -S ffmpeg x265
 
 # Installation HEIF/HEIC
 echo "[3/5] Installation du support HEIF / HEIC..."
-sudo pacman -S --noconfirm libheif libde265
+sudo pacman -S libheif libde265
 
 # Intégration KDE
 echo "[4/5] Installation des plugins KDE (miniatures + Gwenview)..."
-sudo pacman -S --noconfirm qt6-imageformats kdegraphics-thumbnailers
+sudo pacman -S qt6-imageformats kdegraphics-thumbnailers
 
 # VLC
 echo "[5/5] Installation de VLC..."
-sudo pacman -S --noconfirm vlc
+sudo pacman -S vlc
 
 echo ""
 echo "=== Vérifications ==="
