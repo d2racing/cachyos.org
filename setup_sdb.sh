@@ -2,7 +2,6 @@
 
 DISK="/dev/sdb"
 
-sudo pacman -Sy --noconfirm zfsutils-linux gdisk
 sudo wipefs -a $DISK
 sudo sgdisk --zap-all $DISK
 
