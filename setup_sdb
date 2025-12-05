@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sudo pacman -Sy --noconfirm zfsutils-linux gdisk
 sudo wipefs -a /dev/sdb
 sudo sgdisk --zap-all /dev/sdb
 
