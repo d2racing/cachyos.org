@@ -75,6 +75,7 @@ done
 log "Sauvegarde terminée le $DATE"
 
 # sudo mkdir -p /mnt/backup 
+# sudo mkfs.btrfs -f /dev/sdb1
 # sudo mount /dev/sdb1 /mnt/backup 
 # cd /mnt/backup 
 # sudo btrfs subvolume create nas_backup 
