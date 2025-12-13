@@ -10,7 +10,6 @@ sudo zpool import backuppool
 
 /mnt/backup/nas_backup
 /mnt/backup/nas_backup/current
-/mnt/backup/nas_backup/snapshots
 
 sudo zfs mount -a
 
