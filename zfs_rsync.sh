@@ -11,7 +11,6 @@ SHARES=("CLONEZILLA" "DIVERS" "DONNEES" "homes" "LOGICIELS" "photo" "PHOTOSYNC" 
 NAS_MOUNT_BASE="/mnt/nas"
 BACKUP_ROOT="/mnt/backup/nas_backup"
 CURRENT="$BACKUP_ROOT/current"
-SNAPDIR="$BACKUP_ROOT/snapshots"
 
 DATE=$(date +%Y-%m-%d_%H-%M)
 SNAPNAME="snap-$DATE"
@@ -28,7 +27,7 @@ if ! mountpoint -q /mnt/backup; then
     sudo zfs mount -a || { log "Erreur de montage du pool ZFS"; exit 1; }
 fi
 
-mkdir -p "$NAS_MOUNT_BASE" "$CURRENT" "$SNAPDIR"
+mkdir -p "$NAS_MOUNT_BASE" "$CURRENT"
 
 # --- CHECK FREE SPACE ---
 AVAIL=$(df -h "$BACKUP_ROOT" | tail -1 | awk '{print $4}')
