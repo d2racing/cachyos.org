@@ -57,6 +57,7 @@ for SHARE in "${SHARES[@]}"; do
         --info=progress2 "$SRC/" "$DEST/" \
         || log "Erreur rsync sur $SHARE"
 
+    sudo sync
     log ">>> Démontage de $SHARE..."
     sudo umount "$SRC"
 done
