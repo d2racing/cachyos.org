@@ -5,6 +5,7 @@
 # ==========================================
 
 set -o pipefail
+set -euo pipefail
 
 # --- CONFIGURATION ---
 NAS_IP="XXX.XXX.XXX.XXX"
@@ -13,36 +14,58 @@ CREDENTIALS_FILE="/root/.nas-credentials"
 SHARES=("CLONEZILLA" "DIVERS" "DONNEES" "homes" "LOGICIELS" "photo" "PHOTOSYNC" "STORAGE_ANALYZER")
 
 NAS_MOUNT_BASE="/mnt/nas"
-BACKUP_ROOT="/mnt/backup/nas"
+BACKUP_ROOT="/mnt/backup/nas_backup"
 CURRENT="$BACKUP_ROOT/current"
-
-ZFS_DATASET="backuppool/nas/current"
+ZFS_DATASET="backuppool/nas_backup/current"
 
 DATE=$(date +%Y-%m-%d_%H-%M)
 SNAPNAME="snap-$DATE"
-
 LOG_FILE="$BACKUP_ROOT/backup_log.txt"
 
 ANY_CHANGE=0
 
-# --- LOG ---
+# --- LOG FUNCTION ---
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-# --- PREVIEW + CONFIRM ---
+# --- CHECK ZFS POOL ---
+if ! zfs list backuppool >/dev/null 2>&1; then
+    log "❌ Pool ZFS backuppool indisponible"
+    exit 1
+fi
+
+# --- MOUNT SPECIFIC DATASET ---
+log "Montage du dataset ZFS..."
+if ! zfs mount "$BACKUP_ROOT" >/dev/null 2>&1; then
+    log "❌ Échec montage ZFS du dataset $BACKUP_ROOT"
+    exit 1
+fi
+
+# --- HARD MOUNTPOINT CHECK ---
+mountpoint -q "$BACKUP_ROOT" || {
+    log "❌ $BACKUP_ROOT n'est pas monté. Arrêt du script."
+    exit 1
+}
+
+mkdir -p "$NAS_MOUNT_BASE" "$CURRENT"
+
+# --- CHECK FREE SPACE ---
+AVAIL=$(df -h "$CURRENT" | awk 'NR==2 {print $4}')
+log "Espace disponible sur disque de sauvegarde : $AVAIL"
+
+# --- PREVIEW + CONFIRM FUNCTION ---
 preview_and_confirm() {
     local SRC="$1"
     local DEST="$2"
     local SHARE="$3"
 
     log ">>> Dry-run rsync pour $SHARE"
-
     echo
     echo "========== CHANGEMENTS POUR $SHARE =========="
     echo
 
-    PREVIEW=$(rsync -aH --delete \
+    PREVIEW=$(rsync -aH --delete --one-file-system \
         --exclude="#snapshot" --exclude="#recycle" --exclude="@eaDir" \
         --exclude="@recycle" --exclude="@tmp" --exclude=".SynoIndex*" \
         --exclude="@__thumb/" \
@@ -73,22 +96,6 @@ preview_and_confirm() {
     esac
 }
 
-# --- CHECK ZFS POOL ---
-if ! zfs list backuppool >/dev/null 2>&1; then
-    log "❌ Pool ZFS backuppool indisponible"
-    exit 1
-fi
-
-# --- MOUNT ZFS DATASETS ---
-log "Montage des datasets ZFS..."
-zfs mount -a || { log "❌ Échec montage ZFS"; exit 1; }
-
-mkdir -p "$NAS_MOUNT_BASE" "$CURRENT"
-
-# --- CHECK FREE SPACE ---
-AVAIL=$(df -h "$CURRENT" | awk 'NR==2 {print $4}')
-log "Espace disponible sur disque de sauvegarde : $AVAIL"
-
 # --- BACKUP LOOP ---
 for SHARE in "${SHARES[@]}"; do
     SRC="$NAS_MOUNT_BASE/$SHARE"
@@ -98,16 +105,18 @@ for SHARE in "${SHARES[@]}"; do
 
     mkdir -p "$SRC" "$DEST"
 
+    # Mount NAS share
     if ! mount -t cifs "//$NAS_IP/$SHARE" "$SRC" \
         -o credentials="$CREDENTIALS_FILE",rw,iocharset=utf8,vers=3.0; then
         log "❌ Échec montage SMB pour $SHARE — arrêt du script"
         exit 1
     fi
 
+    # Dry-run + confirm
     if preview_and_confirm "$SRC" "$DEST" "$SHARE"; then
         log "▶ Lancement rsync réel pour $SHARE"
 
-        rsync -aH --delete \
+        rsync -aH --delete --one-file-system \
             --exclude="#snapshot" --exclude="#recycle" --exclude="@eaDir" \
             --exclude="@recycle" --exclude="@tmp" --exclude=".SynoIndex*" \
             --exclude="@__thumb/" \
