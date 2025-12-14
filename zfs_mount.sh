@@ -13,9 +13,5 @@ sudo zpool import backuppool
 
 sudo zfs mount -a
 
-sudo zfs unmount -a
 sudo zfs unmount -R backuppool
-sudo zpool export backuppool
-
-sudo zfs unmount backuppool
 sudo zpool export backuppool
