@@ -4,7 +4,6 @@
 # rsync + dry-run + confirmation + snapshots
 # ==========================================
 
-set -o pipefail
 set -euo pipefail
 
 # --- CONFIGURATION ---
@@ -35,11 +34,15 @@ if ! zfs list backuppool >/dev/null 2>&1; then
     exit 1
 fi
 
-# --- MOUNT SPECIFIC DATASET ---
+# --- MOUNT DATASET SAFELY ---
 log "Montage du dataset ZFS..."
-if ! zfs mount backuppool/nas_backup >/dev/null 2>&1; then
-    log "❌ Échec montage ZFS du dataset backuppool/nas_backup"
-    exit 1
+if [ "$(zfs get -H -o value mounted backuppool/nas_backup)" = "no" ]; then
+    if ! zfs mount backuppool/nas_backup >/dev/null 2>&1; then
+        log "❌ Échec montage ZFS du dataset backuppool/nas_backup"
+        exit 1
+    fi
+else
+    log "Dataset backuppool/nas_backup déjà monté"
 fi
 
 # --- HARD MOUNTPOINT CHECK ---
