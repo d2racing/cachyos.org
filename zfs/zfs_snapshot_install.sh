@@ -3,8 +3,6 @@
 # Snapshot de cachyos
 # ==========================================
 
-#!/usr/bin/env bash
-
 DATASET="zpcachyos/ROOT/cos"
 SNAPNAME="snap-$(date +'%Y%m%d-%H:%M')"
 
