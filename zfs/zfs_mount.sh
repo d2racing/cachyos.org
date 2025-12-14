@@ -2,7 +2,9 @@
 set -euo pipefail
 
 POOL="backuppool"
-DST="/mnt/backup/nas"
+DST="/mnt/backup/nas_backup"
+
+
 
 # 1. Import pool (do nothing if already imported)
 if ! zpool list -H -o name | grep -qx "$POOL"; then
