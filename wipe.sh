@@ -1,0 +1,1 @@
+sudo bash -c 'for i in 1 2 3; do echo "Pass $i: Overwriting with random data"; dd if=/dev/urandom of=/dev/sdb bs=1M conv=fdatasync status=progress; done; echo "Final pass: Writing zeros"; dd if=/dev/zero of=/dev/sdb bs=1M conv=fdatasync status=progress'
