@@ -133,3 +133,12 @@ for snap in $OLD_SNAPSHOTS; do
 done
 
 log "Sauvegarde terminée le $DATE"
+
+# sudo mkdir -p /mnt/backup
+# sudo mkfs.btrfs -f /dev/sdb1
+# sudo mount /dev/sdb1 /mnt/backup
+# cd /mnt/backup
+# sudo btrfs subvolume create nas_backup
+# cd /mnt/backup/nas_backup
+# sudo btrfs subvolume create current
+# sudo btrfs subvolume snapshot -r /mnt/backup/nas_backup/current /mnt/backup/nas_backup/20251023
