@@ -30,4 +30,8 @@ zfs set recordsize=1M backuppool
 zfs set recordsize=1M backuppool/nas_backup
 zfs set recordsize=1M backuppool/nas_backup/current
 
+zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppool backuppool/nas_backup/current
+
 echo "WD Elements 14TB prêt pour backup ZFS ✔"
+
+
