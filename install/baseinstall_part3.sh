@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo "=== Début de baseinstall_part3 ==="
 echo "=== Activation du support HEVC / HEIF sous CachyOS + KDE ==="
 
 # Mise à jour
