@@ -37,8 +37,8 @@ fi
 
 # --- MOUNT SPECIFIC DATASET ---
 log "Montage du dataset ZFS..."
-if ! zfs mount "$BACKUP_ROOT" >/dev/null 2>&1; then
-    log "❌ Échec montage ZFS du dataset $BACKUP_ROOT"
+if ! zfs mount backuppool/nas_backup >/dev/null 2>&1; then
+    log "❌ Échec montage ZFS du dataset backuppool/nas_backup"
     exit 1
 fi
 
