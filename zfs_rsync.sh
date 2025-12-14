@@ -1,15 +1,17 @@
 #!/bin/bash
 # ==========================================
-# Sauvegarde NAS Synology -> Disque externe ZFS (avec snapshots)
+# Backup Synology -> ZFS (rsync + snapshots)
 # ==========================================
+
+set -o pipefail
 
 # --- CONFIGURATION ---
 NAS_IP="XXX.XXX.XXX.XXX"
-CREDENTIALS_FILE="/root/.nas-credentials"  # username=XXX / password=YYY
+CREDENTIALS_FILE="/root/.nas-credentials"
 SHARES=("CLONEZILLA" "DIVERS" "DONNEES" "homes" "LOGICIELS" "photo" "PHOTOSYNC" "STORAGE_ANALYZER")
 
 NAS_MOUNT_BASE="/mnt/nas"
-BACKUP_ROOT="/mnt/backup/nas_backup"
+BACKUP_ROOT="/mnt/backup/nas"
 CURRENT="$BACKUP_ROOT/current"
 
 DATE=$(date +%Y-%m-%d_%H-%M)
@@ -21,58 +23,66 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-# --- VERIFY & MOUNT ZFS POOL ---
-if ! mountpoint -q /mnt/backup; then
-    log "Montage du pool ZFS..."
-    sudo zfs mount -a || { log "Erreur de montage du pool ZFS"; exit 1; }
+# --- CHECK ZFS POOL ---
+if ! zfs list backuppool >/dev/null 2>&1; then
+    log "❌ Pool ZFS backuppool indisponible"
+    exit 1
 fi
+
+# --- MOUNT ZFS DATASETS ---
+log "Montage des datasets ZFS..."
+zfs mount -a || { log "❌ Échec montage ZFS"; exit 1; }
 
 mkdir -p "$NAS_MOUNT_BASE" "$CURRENT"
 
 # --- CHECK FREE SPACE ---
-AVAIL=$(df -h "$BACKUP_ROOT" | tail -1 | awk '{print $4}')
+AVAIL=$(df -h "$CURRENT" | awk 'NR==2 {print $4}')
 log "Espace disponible sur disque de sauvegarde : $AVAIL"
 
-# --- PROCESS EACH SHARE ---
+# --- BACKUP LOOP ---
 for SHARE in "${SHARES[@]}"; do
     SRC="$NAS_MOUNT_BASE/$SHARE"
     DEST="$CURRENT/$SHARE"
 
-    log ">>> Montage de $SHARE..."
-    sudo mkdir -p "$SRC" "$DEST"
+    log "▶ Montage SMB : $SHARE"
+    mkdir -p "$SRC" "$DEST"
 
-    sudo mount -t cifs "//$NAS_IP/$SHARE" "$SRC" \
-        -o credentials="$CREDENTIALS_FILE",rw,iocharset=utf8,vers=3.0 \
-        || { log "Échec du montage de $SHARE — arrêt !"; exit 1; }
+    if ! mount -t cifs "//$NAS_IP/$SHARE" "$SRC" \
+        -o credentials="$CREDENTIALS_FILE",rw,iocharset=utf8,vers=3.0,nofail,soft; then
+        log "❌ Échec montage SMB pour $SHARE"
+        continue
+    fi
 
-    log ">>> Synchronisation de $SHARE..."
-    sudo rsync -aHAX --no-xattrs --delete \
+    log "▶ rsync : $SHARE"
+    if ! rsync -aH --delete \
         --exclude="#snapshot" --exclude="#recycle" --exclude="@eaDir" \
         --exclude="@recycle" --exclude="@tmp" --exclude=".SynoIndex*" \
         --exclude="@__thumb/" \
-        --info=progress2 "$SRC/" "$DEST/" \
-        || log "Erreur rsync sur $SHARE"
+        --info=progress2 "$SRC/" "$DEST/"; then
+        log "⚠️ Erreur rsync sur $SHARE"
+    fi
 
-    log ">>> Démontage de $SHARE..."
-    sudo umount "$SRC"
+    umount "$SRC"
+    log "✔ $SHARE terminé"
 done
 
 # --- CREATE SNAPSHOT ---
 log "Création du snapshot ZFS : $SNAPNAME"
-sudo zfs snapshot backuppool/nas_backup/current@"$SNAPNAME" \
-    || { log "Erreur lors du snapshot ZFS !"; exit 1; }
+zfs snapshot backuppool/nas/current@"$SNAPNAME" \
+    || { log "❌ Échec snapshot ZFS"; exit 1; }
 
-# --- SNAPSHOT ROTATION (keep 7) ---
-log "Rotation des snapshots..."
-SNAPS=$(sudo zfs list -t snapshot -o name | grep "backuppool/nas_backup/current@" | sort -r)
+# --- SNAPSHOT ROTATION (7) ---
+log "Rotation des snapshots (garder 7)"
+SNAPS=$(zfs list -t snapshot -o name -s creation | grep "backuppool/nas/current@")
 
 COUNT=0
 for snap in $SNAPS; do
     COUNT=$((COUNT+1))
-    if [ $COUNT -gt 7 ]; then
-        log "Suppression snapshot ancien : $snap"
-        sudo zfs destroy "$snap"
+    if [ $COUNT -le 7 ]; then
+        continue
     fi
+    log "🗑 Suppression snapshot ancien : $snap"
+    zfs destroy "$snap"
 done
 
-log "Sauvegarde terminée le $DATE"
+log "✅ Backup terminé le $DATE"
