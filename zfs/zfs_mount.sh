@@ -23,3 +23,5 @@ mountpoint -q "$DST" || {
 # 4. Show status (sanity check)
 zpool status "$POOL"
 zfs list "$POOL"
+
+sudo zfs list -o name,canmount,mounted,mountpoint
