@@ -24,6 +24,7 @@ zfs set xattr=sa backuppool
 zfs set redundant_metadata=most backuppool
 
 # Optimisation débit séquentiel
+zfs set recordsize=1M backuppool
 zfs set recordsize=1M backuppool/nas_backup
 zfs set recordsize=1M backuppool/nas_backup/current
 
