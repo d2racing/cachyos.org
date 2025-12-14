@@ -2,21 +2,29 @@
 
 DISK="/dev/sdb"
 
-sudo wipefs -a $DISK
-sudo sgdisk --zap-all $DISK
+wipefs -a $DISK
+sgdisk --zap-all $DISK
 
-sudo zpool create -f \
+zpool create -f \
   -o ashift=12 \
   backuppool \
   $DISK
 
-sudo zfs create backuppool/nas_backup
-sudo zfs create backuppool/nas_backup/current
+zfs create backuppool/nas_backup
+zfs create backuppool/nas_backup/current
 
-sudo zfs set mountpoint=/mnt/backup/nas_backup backuppool/nas_backup
-sudo zfs set mountpoint=/mnt/backup/nas_backup/current backuppool/nas_backup/current
+zfs set mountpoint=/mnt/backup/nas_backup backuppool/nas_backup
+zfs set mountpoint=/mnt/backup/nas_backup/current backuppool/nas_backup/current
 
-sudo zfs set compression=zstd backuppool
-sudo zfs set atime=off backuppool
+# Optimisations HDD USB backup
+zfs set compression=zstd backuppool
+zfs set atime=off backuppool
+zfs set relatime=off backuppool
+zfs set xattr=sa backuppool
+zfs set redundant_metadata=most backuppool
 
+# Optimisation débit séquentiel
+zfs set recordsize=1M backuppool/nas_backup
+zfs set recordsize=1M backuppool/nas_backup/current
 
+echo "WD Elements 14TB prêt pour backup ZFS ✔"
