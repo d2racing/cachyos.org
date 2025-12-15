@@ -25,3 +25,4 @@ zpool status "$POOL"
 zfs list "$POOL"
 
 sudo zfs list -o name,canmount,mounted,mountpoint
+sudo zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppool backuppool/nas_backup/current
