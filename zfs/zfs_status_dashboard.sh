@@ -1,11 +1,14 @@
 #!/bin/bash
 # ============================================================
 # ZFS + DISK HEALTH DASHBOARD
-# Vérification complète : SMART, ZFS, erreurs, usage, snapshots, scrub optionnel
+# Vérification complète : SMART, ZFS, espace, snapshots, scrub
+# Version SAFE — sans speed test
 # ============================================================
 
+set -o pipefail
+
 POOL="backuppool"
-DISK="/dev/sdb"   # ton disque externe physique
+DISK="/dev/sdb"
 
 # -------- Colors --------
 RED="\e[31m"
@@ -20,145 +23,133 @@ header() {
 }
 
 # ============================================================
-# 1. Vérification SMART (Statut matériel du disque)
+# 1. SMART HEALTH
 # ============================================================
 header "SMART HEALTH — $DISK"
 
 if command -v smartctl >/dev/null 2>&1; then
-    smartctl -H $DISK
+    smartctl -H "$DISK" 2>/dev/null || smartctl -H -d sat "$DISK"
     echo
-    smartctl -A $DISK | grep -Ei "reallocated|pending|offline|error"
+    smartctl -A "$DISK" 2>/dev/null || smartctl -A -d sat "$DISK" \
+        | grep -Ei "reallocated|pending|offline|error"
 else
-    echo -e "${YELLOW}SMARTCTL non installé. Installe: sudo pacman -S smartmontools${NC}"
+    echo -e "${YELLOW}SMARTCTL non installé (pacman -S smartmontools)${NC}"
 fi
 
-
 # ============================================================
-# 2. État général du pool ZFS
+# 2. ZPOOL HEALTH
 # ============================================================
 header "ZFS POOL HEALTH — $POOL"
 
-zpool list $POOL
+zpool list "$POOL" || exit 1
 echo
-zpool status $POOL | sed 's/^/  /'
+zpool status "$POOL" | sed 's/^/  /'
 
-HEALTH=$(zpool get -H -o value health $POOL)
-
+HEALTH=$(zpool get -H -o value health "$POOL")
 if [[ "$HEALTH" != "ONLINE" ]]; then
-    echo -e "${RED}⚠ Pool Health Issue: $HEALTH${NC}"
+    echo -e "${RED}⚠ Pool health: $HEALTH${NC}"
 else
-    echo -e "${GREEN}✔ Pool is Healthy${NC}"
+    echo -e "${GREEN}✔ Pool ONLINE${NC}"
 fi
 
-
 # ============================================================
-# 3. Espace ZFS
+# 3. DATASET USAGE
 # ============================================================
 header "DATASET USAGE"
 
-zfs list -r $POOL
-
+zfs list -r "$POOL"
 
 header "SPACE BREAKDOWN"
-zfs list -pHr -o name,used,available,refer,compressratio $POOL
-
+zfs list -pHr -o name,used,available,refer,compressratio "$POOL"
 
 # ============================================================
-# 4. Snapshots
+# 4. SNAPSHOTS
 # ============================================================
 header "SNAPSHOTS"
 
-zfs list -t snapshot -o name,used,refer -s creation -r $POOL
-
+zfs list -t snapshot -o name,used,refer -s creation -r "$POOL"
 
 # ============================================================
-# 5. Compression
+# 5. COMPRESSION
 # ============================================================
 header "COMPRESSION RATIOS"
 
-zfs get -o name,value -H compressratio -r $POOL
-
+zfs get -H -o name,value compressratio -r "$POOL"
 
 # ============================================================
-# 6. Vérification de l'espace libre
+# 6. FREE SPACE CHECK
 # ============================================================
 header "FREE SPACE CHECK"
 
-FREE=$(zfs list -Hp -o avail,used $POOL | awk '{print $1/($1+$2)*100}')
+FREE=$(zfs list -Hp -o avail,used "$POOL" | awk '{print $1/($1+$2)*100}')
 FREE_INT=${FREE%.*}
 
-if (( FREE_INT < 20 )); then
-    echo -e "${YELLOW}⚠ Free space below 20% ($FREE_INT% remaining)${NC}"
+if (( FREE_INT < 30 )); then
+    echo -e "${YELLOW}⚠ Free space below 30% ($FREE_INT%) — ZFS perf may degrade${NC}"
 else
-    echo -e "${GREEN}✔ Sufficient free space ($FREE_INT% available)${NC}"
+    echo -e "${GREEN}✔ Free space OK ($FREE_INT%)${NC}"
 fi
 
-
 # ============================================================
-# 7. Vérification des erreurs (I/O, checksum)
+# 7. ZFS ERROR CHECK (fiable)
 # ============================================================
-header "POOL ERROR CHECK"
+header "ZFS ERROR CHECK"
 
-READ=0; WRITE=0; CKSUM=0
-read READ WRITE CKSUM <<< $(zpool status $POOL | grep ONLINE | awk '{print $3, $4, $5}')
-
-if (( READ > 0 || WRITE > 0 || CKSUM > 0 )); then
-    echo -e "${RED}⚠ Errors Detected: READ=$READ WRITE=$WRITE CKSUM=$CKSUM${NC}"
+ERRORS=$(zpool status "$POOL" | awk '/errors:/ {print $2}')
+if [[ "$ERRORS" != "No" ]]; then
+    echo -e "${RED}⚠ ZFS reports errors: $ERRORS${NC}"
 else
-    echo -e "${GREEN}✔ No I/O or Checksum Errors${NC}"
+    echo -e "${GREEN}✔ No ZFS errors reported${NC}"
 fi
 
+# ============================================================
+# 8. ZFS EVENTS
+# ============================================================
+header "ZFS EVENTS (recent)"
+
+zpool events -v | tail -n 20 | sed 's/^/  /'
 
 # ============================================================
-# 8. Événements ZFS (erreurs passées)
-# ============================================================
-header "ZFS EVENTS (history)"
-
-zpool events -v | sed 's/^/  /'
-
-
-# ============================================================
-# 9. Scrub Status
+# 9. SCRUB STATUS
 # ============================================================
 header "SCRUB STATUS"
 
-zpool status $POOL | grep -A2 "scan:" | sed 's/^/  /'
-
-
-# ============================================================
-# 10. Test lecture disque (non destructif)
-# ============================================================
-header "DISK READ TEST (dd — 2GB)"
-
-dd if=$DISK of=/dev/null bs=1M count=2048 status=progress
-
+zpool status "$POOL" | grep -A2 "scan:" | sed 's/^/  /'
 
 # ============================================================
-# 11. Reset errors (optionnel, sécurisé)
+# 10. ZFS TUNING CHECK (backup best practices)
+# ============================================================
+header "ZFS DATASET TUNING"
+
+zfs get compression,atime,recordsize,sync,xattr "$POOL"
+
+# ============================================================
+# 11. RESET ERROR COUNTERS (confirmation)
 # ============================================================
 header "RESET ERROR COUNTERS"
 
-zpool clear $POOL
-echo -e "${GREEN}✔ zpool clear effectué (compteurs remis à zéro)${NC}"
-
-
-# ============================================================
-# 12. SCRUB AUTOMATIQUE — exécution conditionnelle
-# ============================================================
-header "SCRUB AUTOMATIC OPTION"
-
-read -p "Voulez-vous lancer un scrub complet maintenant ? (o/n) : " REP
-
-if [[ "$REP" =~ ^[Oo]$ ]]; then
-    echo -e "${YELLOW}⚡ Lancement du scrub sur le pool $POOL...${NC}"
-    zpool scrub $POOL
-    echo -e "${GREEN}✔ Scrub lancé. Vérifiez l'avancement avec 'zpool status $POOL'.${NC}"
+read -p "Confirmer le reset des compteurs d'erreurs ZFS ? (o/n) : " CLR
+if [[ "$CLR" =~ ^[Oo]$ ]]; then
+    zpool clear "$POOL"
+    echo -e "${GREEN}✔ Compteurs remis à zéro${NC}"
 else
-    echo -e "${BLUE}✔ Scrub non lancé.${NC}"
+    echo -e "${BLUE}✔ Reset annulé${NC}"
 fi
 
+# ============================================================
+# 12. SCRUB OPTIONNEL
+# ============================================================
+header "SCRUB OPTION"
+
+read -p "Lancer un scrub maintenant ? (o/n) : " REP
+if [[ "$REP" =~ ^[Oo]$ ]]; then
+    echo -e "${YELLOW}⚡ Scrub lancé sur $POOL${NC}"
+    zpool scrub "$POOL"
+else
+    echo -e "${BLUE}✔ Scrub non lancé${NC}"
+fi
 
 # ============================================================
-# Done
+# DONE
 # ============================================================
-echo -e "\n${BOLD}${GREEN}✓ Dashboard complete.${NC}\n"
+echo -e "\n${BOLD}${GREEN}✓ Dashboard terminé.${NC}\n"
