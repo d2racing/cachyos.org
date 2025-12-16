@@ -1,7 +1,8 @@
 #!/bin/bash
 # ===================================================
 # Envoi du dernier snapshot pré-update de CachyOS
-# vers le disque externe avec progression et rotation
+# vers le disque externe avec progression, rotation
+# et vérification si déjà envoyé
 # ===================================================
 
 # Dataset source sur le système CachyOS
@@ -28,6 +29,13 @@ LAST_SNAP=$(zfs list -t snapshot -o name -s creation | grep "^${SRC}@pre-pacman"
 if [ -z "$LAST_SNAP" ]; then
     echo "Aucun snapshot pré-update trouvé pour ${SRC}. Abandon."
     exit 1
+fi
+
+# Vérifie si le snapshot a déjà été envoyé
+SNAP_NAME=${LAST_SNAP##*@}  # extrait YYYYMMDD-HHMM
+if zfs list -t snapshot -o name | grep -q "^${DEST_CURRENT}@${SNAP_NAME}$"; then
+    echo "Le dernier snapshot ${LAST_SNAP} a déjà été envoyé sur le disque externe."
+    exit 0
 fi
 
 echo "Envoi du snapshot ${LAST_SNAP} vers ${DEST_CURRENT} ..."
