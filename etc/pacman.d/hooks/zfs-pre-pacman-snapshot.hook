@@ -1,0 +1,12 @@
+[Trigger]
+# Tous les types d’opérations sur les packages
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = ZFS snapshot before pacman operation
+When = PreTransaction
+Exec = /usr/local/bin/zfs-pacman-snapshot.sh
