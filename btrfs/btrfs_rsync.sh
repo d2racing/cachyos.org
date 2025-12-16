@@ -7,7 +7,7 @@
 set -o pipefail
 
 # --- CONFIGURATION ---
-NAS_IP="XXX.XXX.XXX.XXX"
+NAS_IP="192.168.2.250"
 CREDENTIALS_FILE="/root/.nas-credentials"  # username=XXX / password=YYY
 
 SHARES=("CLONEZILLA" "DIVERS" "DONNEES" "homes" "LOGICIELS" "photo" "PHOTOSYNC" "STORAGE_ANALYZER")
