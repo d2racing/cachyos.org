@@ -43,7 +43,7 @@ preview_and_confirm() {
     echo "========== CHANGEMENTS POUR $SHARE =========="
     echo
 
-    PREVIEW=$(sudo rsync -aHAX --no-xattrs --delete \
+    PREVIEW=$(rsync -aHAX --no-xattrs --delete \
         --exclude="#snapshot" --exclude="#recycle" --exclude="@eaDir/" --exclude="@recycle" \
         --exclude="@tmp" --exclude=".SynoIndex*" --exclude="@__thumb/" \
         --dry-run --itemize-changes \
@@ -71,12 +71,12 @@ preview_and_confirm() {
 # --- MONTAGE DISQUE EXTERNE ---
 if ! mount | grep -q "$MOUNT_POINT"; then
     log "Montage du disque externe..."
-    sudo mkdir -p "$MOUNT_POINT"
-    sudo mount /dev/sdb1 "$MOUNT_POINT" || { log "Erreur montage disque externe"; exit 1; }
+    mkdir -p "$MOUNT_POINT"
+    mount /dev/sdb1 "$MOUNT_POINT" || { log "Erreur montage disque externe"; exit 1; }
 fi
 
 # --- DOSSIER COURANT ---
-sudo mkdir -p "$CURRENT"
+mkdir -p "$CURRENT"
 
 # --- ESPACE DISQUE ---
 AVAIL=$(df -h "$MOUNT_POINT" | tail -1 | awk '{print $4}')
@@ -89,16 +89,16 @@ for SHARE in "${SHARES[@]}"; do
 
     log ">>> Traitement de $SHARE"
 
-    sudo mkdir -p "$SRC" "$DEST"
+    mkdir -p "$SRC" "$DEST"
 
-    sudo mount -t cifs "//$NAS_IP/$SHARE" "$SRC" \
+    mount -t cifs "//$NAS_IP/$SHARE" "$SRC" \
         -o credentials="$CREDENTIALS_FILE",rw,iocharset=utf8,vers=3.0 \
         || { log "Échec montage $SHARE — arrêt"; exit 1; }
 
     if preview_and_confirm "$SRC" "$DEST" "$SHARE"; then
         log ">>> Lancement rsync réel pour $SHARE"
 
-        sudo rsync -aHAX --no-xattrs --delete \
+        rsync -aHAX --no-xattrs --delete \
             --exclude="#snapshot" --exclude="#recycle" --exclude="@eaDir/" --exclude="@recycle" \
             --exclude="@tmp" --exclude=".SynoIndex*" --exclude="@__thumb/" \
             --info=progress2 \
@@ -109,14 +109,14 @@ for SHARE in "${SHARES[@]}"; do
         log ">>> Aucun changement appliqué pour $SHARE"
     fi
 
-    sudo sync
-    sudo umount "$SRC"
+    sync
+    umount "$SRC"
 done
 
 # --- SNAPSHOT BTRFS ---
 if [ "$ANY_CHANGE" -eq 1 ]; then
     log "Création snapshot Btrfs : $SNAPSHOT"
-    sudo btrfs subvolume snapshot -r "$CURRENT" "$SNAPSHOT" \
+    btrfs subvolume snapshot -r "$CURRENT" "$SNAPSHOT" \
         || { log "Erreur snapshot"; exit 1; }
 else
     log "Aucun changement global — snapshot ignoré"
@@ -128,7 +128,7 @@ OLD_SNAPSHOTS=$(ls -dt "$BACKUP_BASE"/auto-* | tail -n +$((KEEP_LAST+1)))
 
 for snap in $OLD_SNAPSHOTS; do
     log "Suppression ancien snapshot : $snap"
-    sudo btrfs subvolume delete "$snap"
+    btrfs subvolume delete "$snap"
 done
 
 log "Sauvegarde terminée le $DATE"
