@@ -1,28 +1,52 @@
-/mnt/backup/nas/current/
-└── CLONEZILLA/
-└── DIVERS/
-└── DONNEES/
-└── homes/
-└── LOGICIELS/
-└── photo/
-└── PHOTOSYNC/
-└── STORAGE_ANALYZER/
+┌──────────────────────────────────────────┐
+│              HDD USB 14 TB                │
+│              Pool : backuppool            │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ backuppool/nas_backup               │  │
+│  │  mountpoint: /mnt/backup/nas        │  │
+│  │                                    │  │
+│  │  current/                           │  │
+│  │   ├─ CLONEZILLA/                    │  │
+│  │   ├─ DIVERS/                        │  │
+│  │   ├─ DONNEES/                       │  │
+│  │   ├─ homes/                         │  │
+│  │   ├─ LOGICIELS/                     │  │
+│  │   ├─ photo/                         │  │
+│  │   ├─ PHOTOSYNC/                     │  │
+│  │   └─ STORAGE_ANALYZER/              │  │
+│  │                                    │  │
+│  │  Snapshots ZFS                      │  │
+│  │   ├─ @auto-YYYYMMDD-HHMM            │  │
+│  │   └─ rotation (rsync + snapshots)  │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ backuppool/cachyos_backup           │  │
+│  │  mountpoint: none                   │  │
+│  │  rôle: miroir ZFS passif            │  │
+│  │                                    │  │
+│  │  Snapshots reçus                    │  │
+│  │   ├─ @auto-YYYY-MM-DD_HH-MM         │  │
+│  │   └─ incrémental ZFS send           │  │
+│  └────────────────────────────────────┘  │
+└──────────────────────────────────────────┘
 
-
-
-backuppool
-│
-├─ nas_backup
-│   └─ current
-│       └─ (snapshots du NAS)
-│
-└─ cachyos_backup
-    └─ current
-        ├─ ROOT
-        │   ├─ cos
-        │   │   ├─ home      -> /mnt/cachyos_backup/current/home
-        │   │   ├─ root      -> /
-        │   │   ├─ varcache  -> /var/cache
-        │   │   └─ varlog    -> /var/log
-        │   └─ (autres sous-datasets si besoin)
-        └─ (snapshots pré-pacman, rotation automatique 10 derniers)
+┌──────────────────────────────────────────┐
+│              CachyOS (SSD)                │
+│              Pool : zpcachyos             │
+│                                          │
+│  zpcachyos/ROOT/cos                       │
+│  ├─ root      → /                         │
+│  ├─ home      → /home                     │
+│  ├─ varcache  → /var/cache               │
+│  └─ varlog    → /var/log                 │
+│                                          │
+│  Snapshots locaux                         │
+│  ├─ auto-2025-12-17_17-01                │
+│  ├─ auto-2025-12-17_17-03                │
+│  └─ auto-2025-12-17_17-06                │
+│                                          │
+│  (snapshots pré-pacman / rollback)       │
+└───────────────┬──────────────────────────┘
+                ▼
