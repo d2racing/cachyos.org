@@ -18,7 +18,8 @@ CURRENT="$BACKUP_ROOT/current"
 ZFS_DATASET="backuppool/nas_backup/current"
 
 DATE=$(date +%Y-%m-%d_%H-%M)
-SNAPNAME="snap-$DATE"
+SNAPNAME="auto-$DATE"  # uniformisation avec @auto
+
 LOG_FILE="$BACKUP_ROOT/backup_log.txt"
 
 ANY_CHANGE=0
@@ -145,14 +146,14 @@ else
     log "Aucun changement global — snapshot ZFS ignoré"
 fi
 
-# --- SNAPSHOT ROTATION (KEEP 7) ---
-log "Rotation des snapshots ZFS (garder 7)"
-SNAPS=$(zfs list -t snapshot -o name -s creation | grep "^$ZFS_DATASET@")
+# --- SNAPSHOT ROTATION (KEEP 30) ---
+log "Rotation des snapshots ZFS (garder 30)"
+SNAPS=$(zfs list -t snapshot -o name -s creation | grep "^$ZFS_DATASET@auto-")
 
 COUNT=0
 for snap in $SNAPS; do
     COUNT=$((COUNT+1))
-    if [ "$COUNT" -le 7 ]; then
+    if [ "$COUNT" -le 30 ]; then
         continue
     fi
     log "🗑 Suppression ancien snapshot : $snap"
