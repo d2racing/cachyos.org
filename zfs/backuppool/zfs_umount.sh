@@ -1,4 +1,19 @@
 #!/bin/bash
+set -euo pipefail
 
-sudo zfs unmount backuppool
-sudo zpool export backuppool
+POOL="backuppool"
+DATASET="backuppool/nas_backup/current"
+
+# 1️⃣ Démonte uniquement le dataset utilisé
+sudo zfs unmount "$DATASET"
+
+# 2️⃣ Vérifie si le dataset est bien démonté
+mountpoint -q "/mnt/backup/nas_backup/current" && {
+    echo "ERROR: $DATASET n'a pas été démonté correctement"
+    exit 1
+}
+
+# 3️⃣ Export du pool
+sudo zpool export "$POOL"
+
+echo "✅ $POOL exporté avec succès"
