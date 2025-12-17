@@ -1,14 +1,14 @@
 #!/bin/bash
 # ==========================================
 # Sauvegarde NAS Synology -> Disque externe Btrfs
-# Avec dry-run, confirmation utilisateur et snapshots
+# Avec dry-run, confirmation utilisateur et snapshots uniformes (@auto)
 # ==========================================
 
-set -o pipefail
+set -eo pipefail
 
 # --- CONFIGURATION ---
 NAS_IP="192.168.2.250"
-CREDENTIALS_FILE="/root/.nas-credentials"  # username=XXX / password=YYY
+CREDENTIALS_FILE="/root/.nas-credentials"
 
 SHARES=("CLONEZILLA" "DIVERS" "DONNEES" "homes" "LOGICIELS" "photo" "PHOTOSYNC" "STORAGE_ANALYZER")
 
@@ -18,11 +18,13 @@ BACKUP_BASE="$MOUNT_POINT/nas_backup"
 CURRENT="$BACKUP_BASE/current"
 
 DATE=$(date +%Y-%m-%d_%H-%M)
-SNAPSHOT="$BACKUP_BASE/$DATE"
+SNAPNAME="auto-$DATE"
+SNAPSHOT="$BACKUP_BASE/$SNAPNAME"
 
 LOG_FILE="$BACKUP_BASE/backup_log.txt"
 
 ANY_CHANGE=0
+KEEP_LAST=30
 
 # --- LOG ---
 log() {
@@ -61,13 +63,8 @@ preview_and_confirm() {
     echo
 
     case "$CONFIRM" in
-        o|O|y|Y)
-            return 0
-            ;;
-        *)
-            log "Synchronisation annulée pour $SHARE"
-            return 1
-            ;;
+        o|O|y|Y) return 0 ;;
+        *) log "Synchronisation annulée pour $SHARE"; return 1 ;;
     esac
 }
 
@@ -125,20 +122,13 @@ else
     log "Aucun changement global — snapshot ignoré"
 fi
 
-# --- ROTATION (7 snapshots) ---
-OLD_SNAPSHOTS=$(ls -dt "$BACKUP_BASE"/* | grep -v current | tail -n +8)
+# --- ROTATION (KEEP_LAST snapshots auto) ---
+log "Rotation des snapshots Btrfs (garder $KEEP_LAST derniers)"
+OLD_SNAPSHOTS=$(ls -dt "$BACKUP_BASE"/auto-* | tail -n +$((KEEP_LAST+1)))
+
 for snap in $OLD_SNAPSHOTS; do
     log "Suppression ancien snapshot : $snap"
     sudo btrfs subvolume delete "$snap"
 done
 
 log "Sauvegarde terminée le $DATE"
-
-# sudo mkdir -p /mnt/backup
-# sudo mkfs.btrfs -f /dev/sdb1
-# sudo mount /dev/sdb1 /mnt/backup
-# cd /mnt/backup
-# sudo btrfs subvolume create nas_backup
-# cd /mnt/backup/nas_backup
-# sudo btrfs subvolume create current
-# sudo btrfs subvolume snapshot -r /mnt/backup/nas_backup/current /mnt/backup/nas_backup/20251023
