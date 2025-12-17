@@ -14,9 +14,9 @@ NAS_MOUNT_BASE="/mnt/NAS"
 for SHARE in "${SHARES[@]}"; do
     SRC="$NAS_MOUNT_BASE/$SHARE"
     echo ">>> Montage de $SHARE..."
-    sudo mkdir -p "$SRC"
+    mkdir -p "$SRC"
 
-    if ! sudo mount -t cifs "//$NAS_IP/$SHARE" "$SRC" \
+    if ! mount -t cifs "//$NAS_IP/$SHARE" "$SRC" \
          -o credentials="$CREDENTIALS_FILE",rw,iocharset=utf8,vers=3.0,uid=1000,gid=1000; then
         
         echo "❌ Échec du montage de $SHARE"
