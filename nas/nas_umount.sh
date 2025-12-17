@@ -11,5 +11,5 @@ NAS_MOUNT_BASE="/mnt/NAS"
 for SHARE in "${SHARES[@]}"; do
     SRC="$NAS_MOUNT_BASE/$SHARE"
     echo ">>> Démontage de $SHARE..."
-    sudo umount $SRC
+    umount $SRC
 done
