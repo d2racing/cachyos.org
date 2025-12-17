@@ -1,0 +1,25 @@
+sudo zpool import -o readonly=off -o cachefile=none backuppool
+
+zfs list
+sudo zfs unmount -a
+
+sudo zfs unmount -f backuppool/cachyos_backup/ROOT/cos/home
+sudo zfs unmount -f backuppool/cachyos_backup/ROOT/cos/varcache
+sudo zfs unmount -f backuppool/cachyos_backup/home
+sudo zfs unmount -f backuppool/cachyos_backup/varcache
+
+sudo zfs unmount -f backuppool/cachyos_backup/ROOT/cos
+sudo zfs unmount -f backuppool/cachyos_backup/ROOT
+sudo zfs unmount -f backuppool/cachyos_backup
+
+sudo zfs destroy -r backuppool/cachyos_backup
+
+zfs list
+
+zfs list -t snapshot | grep zpcachyos/ROOT/cos
+
+sudo zfs send zpcachyos/ROOT/cos@snap-20251216-18:59 | sudo zfs receive backuppool/cachyos_backup
+zfs list -r backuppool/cachyos_backup
+
+sudo zfs unmount -a
+sudo zpool export backuppool
