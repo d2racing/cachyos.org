@@ -34,4 +34,3 @@ zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppoo
 
 echo "WD Elements 14TB prêt pour backup ZFS ✔"
 
-
