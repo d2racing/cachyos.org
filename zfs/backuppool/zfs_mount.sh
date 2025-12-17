@@ -4,25 +4,23 @@ set -euo pipefail
 POOL="backuppool"
 DST="/mnt/backup/nas_backup"
 
-
-
-# 1. Import pool (do nothing if already imported)
+# 1️⃣ Import pool en lecture seule pour sécurité
 if ! zpool list -H -o name | grep -qx "$POOL"; then
-   zpool import "$POOL"
+    sudo zpool import -N -o readonly=on "$POOL"
 fi
 
-# 2. Mount all datasets
-zfs mount -a
+# 2️⃣ Monte uniquement le dataset que tu veux utiliser
+sudo zfs mount backuppool/nas_backup/current
 
-# 3. Hard verification (NON-NEGOTIABLE)
+# 3️⃣ Vérifie le mountpoint
 mountpoint -q "$DST" || {
-  echo "ERROR: $DST is not mounted"
-  exit 1
+    echo "ERROR: $DST is not mounted"
+    sudo zpool export "$POOL"
+    exit 1
 }
 
-# 4. Show status (sanity check)
+# 4️⃣ Affichage pour contrôle
 zpool status "$POOL"
 zfs list "$POOL"
-
 zfs list -o name,canmount,mounted,mountpoint
 zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppool backuppool/nas_backup/current
