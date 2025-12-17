@@ -1,12 +1,17 @@
 #!/bin/bash
 # ==========================================
-# Snapshot de cachyos
+# Snapshot ZFS de CachyOS (nom uniforme @auto)
 # ==========================================
 
 DATASET="zpcachyos/ROOT/cos"
-SNAPNAME="snap-$(date +'%Y%m%d-%H:%M')"
 
-echo "Creating ZFS snapshot: ${DATASET}@${SNAPNAME}"
-time sudo zfs snapshot -r zpcachyos/ROOT/cos@snap-$(date +'%Y%m%d-%H:%M')
-zfs list -t snapshot
+# Création d'un nom de snapshot standardisé
+SNAPNAME="auto-$(date +'%Y-%m-%d_%H-%M')"
 
+echo "[INFO] Création du snapshot ZFS : ${DATASET}@${SNAPNAME}"
+
+# Création récursive du snapshot avec le nouveau nom
+time zfs snapshot -r "${DATASET}@${SNAPNAME}"
+
+# Affichage des snapshots récents pour vérifier
+zfs list -t snapshot -r "${DATASET}"
