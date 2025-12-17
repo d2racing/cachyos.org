@@ -1,26 +1,34 @@
 #!/bin/bash
+set -e  # Arrête le script si une commande échoue
+echo "=== Début de baseinstall_part2 ==="
+paru -S google-chrome 1password anydesk-bin discord signal-desktop 
+echo "=== Installation terminée avec succès ===
+
+~/scripts/cachyos.org/install main*
+❯ cat baseinstall_part3.sh
+#!/bin/bash
 echo "=== Début de baseinstall_part3 ==="
 echo "=== Activation du support HEVC / HEIF sous CachyOS + KDE ==="
 
 # Mise à jour
 echo "[1/5] Mise à jour des paquets..."
-sudo pacman -Syu
+pacman -Syu
 
 # Installation HEVC
 echo "[2/5] Installation des codecs HEVC (H.265)..."
-sudo pacman -S ffmpeg x265
+pacman -S ffmpeg x265
 
 # Installation HEIF/HEIC
 echo "[3/5] Installation du support HEIF / HEIC..."
-sudo pacman -S libheif libde265
+pacman -S libheif libde265
 
 # Intégration KDE
 echo "[4/5] Installation des plugins KDE (miniatures + Gwenview)..."
-sudo pacman -S qt6-imageformats kdegraphics-thumbnailers
+pacman -S qt6-imageformats kdegraphics-thumbnailers
 
 # VLC
 echo "[5/5] Installation de VLC..."
-sudo pacman -S vlc
+pacman -S vlc
 
 echo ""
 echo "=== Vérifications ==="
