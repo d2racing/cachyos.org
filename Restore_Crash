@@ -67,39 +67,47 @@ machine qui ne boote plus du tout
 
 🧭 Étapes COMPLÈTES (LiveCD CachyOS)
 0️⃣ Pré-requis
-
 Nouveau SSD installé
 HDD USB branché (backuppool)
 LiveCD CachyOS
 
-1️⃣ Créer le pool sur le nouveau SSD
-$ lsblk 
-❯ lsblk
-NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-sda           8:0    0 238,5G  0 disk 
-├─sda1        8:1    0     2G  0 part /boot
-└─sda2        8:2    0 236,5G  0 part 
-zram0       253:0    0   7,1G  0 disk [SWAP]
-nvme0n1     259:0    0 476,9G  0 disk 
-├─nvme0n1p1 259:1    0   100M  0 part 
-├─nvme0n1p2 259:2    0    16M  0 part 
-├─nvme0n1p3 259:3    0 476,1G  0 part 
-└─nvme0n1p4 259:4    0   744M  0 part 
-
 $ sudo -i
+
+1️⃣ Identifier le disque
+$ lsblk 
+
+nvme0n1   476G
+
+2️⃣ Créer la table GPT + partitions
+
+sgdisk --zap-all /dev/nvme0n1
+sgdisk \
+  -n1:1M:+2G   -t1:EF00 -c1:"EFI" \
+  -n2:0:0      -t2:BF00 -c2:"ZFS" \
+  /dev/nvme0n1
+
+👉 Résultat :
+/dev/nvme0n1p1 → EFI (/boot)
+/dev/nvme0n1p2 → ZFS
+
+3️⃣ Créer /boot (FAT32)
+$ mkfs.fat -F32 /dev/nvme0n1p1
+
+🟠 ÉTAPE 2 — Créer le pool ZFS
 $ zpool create -f -o ashift=12 \
   -O compression=zstd \
   -O atime=off \
-  zpcachyos /dev/nvme0n1p3
+  zpcachyos /dev/nvme0n1p2
 
 === Créer la structure minimale : ===
 $ zfs create zpcachyos/ROOT
 $ zfs create zpcachyos/ROOT/cos
 
-2️⃣ Importer le disque USB (readonly)
+🟠 ÉTAPE 3 — Restaurer depuis le HDD USB
+
 $ zpool import -N -o readonly=on backuppool
 
-3️⃣ Choisir le snapshot à restaurer
+=== Choisir le snapshot à restaurer ===
 $ zfs list -t snapshot -r backuppool/cachyos_backup
 
 backuppool/cachyos_backup@auto-2025-12-16_23-48              0B      -    96K  -
@@ -111,40 +119,40 @@ backuppool/cachyos_backup@auto-2025-12-17_17-01              0B      -    96K  -
 backuppool/cachyos_backup@auto-2025-12-17_17-03              0B      -    96K  -
 backuppool/cachyos_backup@auto-2025-12-17_17-06              0B      -    96K  -
 
-$ zfs send -R backuppool/cachyos_backup@auto-2025-12-17_17-06 \
+$ zfs send -R backuppool/cachyos_backup@auto-YYYY-MM-DD_HH-MM \
   | zfs receive -F -u zpcachyos/ROOT
 
-✔ restaure :
-/
-/home
-/var/cache
-/var/log
-propriétés ZFS
-sous-datasets
+🟠 ÉTAPE 4 — Fixer les mountpoints
 
-5️⃣ Fixer les mountpoints
 $ zfs set mountpoint=/ zpcachyos/ROOT/cos/root
 $ zfs set mountpoint=/home zpcachyos/ROOT/cos/home
 $ zfs set mountpoint=/var/cache zpcachyos/ROOT/cos/varcache
 $ zfs set mountpoint=/var/log zpcachyos/ROOT/cos/varlog
 
-6️⃣ Monter et chroot
+🟠 ÉTAPE 5 — Monter /boot (CRITIQUE)
+
 $ mkdir -p /mnt
 $ zfs mount zpcachyos/ROOT/cos/root
-$ mount --make-rslave /mnt
-$ zfs mount -a
-$ mount --rbind /dev /mnt/dev
+
+$ mkdir -p /mnt/boot
+$ mount /dev/nvme0n1p1 /mnt/boot
+
+🟠 ÉTAPE 6 — Chroot
+$ mount --rbind /dev  /mnt/dev
 $ mount --rbind /proc /mnt/proc
-$ mount --rbind /sys /mnt/sys
+$ mount --rbind /sys  /mnt/sys
 $ chroot /mnt
 
-7️⃣ Réinstaller le bootloader
+🟠 ÉTAPE 7 — Bootloader
 $ bootctl install
 $ mkinitcpio -P
+$ ls /boot
+$ ls /boot/loader/entries
 
-8️⃣ Rebooter
+🟠 ÉTAPE 8 — Reboot
 $ exit
 $ reboot
+
 
 🧠 POINTS CRITIQUES À RETENIR
 ✔ Le rollback local est instantané
