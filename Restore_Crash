@@ -9,7 +9,6 @@ $ modprobe zfs
 👉 Utilisez ce cas si mon pool interne zpcachyos est intact
 ➜ Rollback via snapshot LOCAL (le plus rapide)
 🎯 Cas typiques
-
 pacman a cassé le système
 boot KO
 service critique HS
@@ -17,10 +16,15 @@ kernel / initramfs brisé
 
 ➡️ Le SSD est toujours lisible
 
+🧭 Étapes (depuis le système ou un LiveCD)
+1️⃣ Démarrer sur LiveCD CachyOS
+
 1️⃣ Importer le pool système
 $ zpool import
 
 # On devrait voir zpcachyos
+
+2️⃣ Importer le pool système
 
 $ zpool import -N zpcachyos
 
@@ -43,6 +47,14 @@ zpcachyos/ROOT/cos@auto-2025-12-17_16-57
 4️⃣ ⚠️ ROLLBACK (IRRÉVERSIBLE)
 
 sudo zfs rollback -r zpcachyos/ROOT/cos@auto-2025-12-17_17-06
+
+✔ remet /, /home, /var/* exactement comme à cette date
+❌ supprime les changements plus récents
+
+5️⃣ Rebooter
+reboot
+
+➡️ Système restauré en quelques secondes
 
 🟠 SCÉNARIO 2 — FORCE MAJEURE
 ➜ Restauration COMPLETE depuis HDD USB (LiveCD)
