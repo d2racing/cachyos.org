@@ -2,8 +2,8 @@
 
 🔍 Vérifier que ZFS est dispo 
 $ sudo -i
-$ pacman -Sy --noconfirm zfs-utils
 $ modprobe zfs
+$ zfs version
 
 🧪 CAS 1 — ROLLBACK SNAPSHOT LOCAL (le plus simple)
 👉 Utilisez ce cas si mon pool interne zpcachyos est intact
@@ -46,7 +46,7 @@ zpcachyos/ROOT/cos@auto-2025-12-17_16-57
 
 4️⃣ ⚠️ ROLLBACK (IRRÉVERSIBLE)
 
-sudo zfs rollback -r zpcachyos/ROOT/cos@auto-2025-12-17_17-06
+sudo zfs rollback -r zpcachyos/ROOT/cos@auto-2025-12-17_17-03
 
 ✔ remet /, /home, /var/* exactement comme à cette date
 ❌ supprime les changements plus récents
@@ -87,7 +87,10 @@ nvme0n1     259:0    0 476,9G  0 disk
 └─nvme0n1p4 259:4    0   744M  0 part 
 
 $ sudo -i
-$ zpool create -f -o ashift=12 zpcachyos /dev/nvme0n1
+$ zpool create -f -o ashift=12 \
+  -O compression=zstd \
+  -O atime=off \
+  zpcachyos /dev/nvme0n1p3
 
 === Créer la structure minimale : ===
 $ zfs create zpcachyos/ROOT
@@ -109,7 +112,7 @@ backuppool/cachyos_backup@auto-2025-12-17_17-03              0B      -    96K  -
 backuppool/cachyos_backup@auto-2025-12-17_17-06              0B      -    96K  -
 
 $ zfs send -R backuppool/cachyos_backup@auto-2025-12-17_17-06 \
-  | zfs receive -F zpcachyos/ROOT
+  | zfs receive -F -u zpcachyos/ROOT
 
 ✔ restaure :
 /
@@ -126,6 +129,9 @@ $ zfs set mountpoint=/var/cache zpcachyos/ROOT/cos/varcache
 $ zfs set mountpoint=/var/log zpcachyos/ROOT/cos/varlog
 
 6️⃣ Monter et chroot
+$ mkdir -p /mnt
+$ zfs mount zpcachyos/ROOT/cos/root
+$ mount --make-rslave /mnt
 $ zfs mount -a
 $ mount --rbind /dev /mnt/dev
 $ mount --rbind /proc /mnt/proc
