@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 set -euo pipefail
 
 # Nombre de snapshots @auto à garder par dataset
