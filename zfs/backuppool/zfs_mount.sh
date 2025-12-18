@@ -2,25 +2,46 @@
 set -euo pipefail
 
 POOL="backuppool"
-DST="/mnt/backup/nas_backup"
+DATASET="$POOL/nas_backup/current"
+DST="/mnt/backup/nas_backup/current"
 
-# 1️⃣ Import pool en lecture seule pour sécurité
+# 1 Import du pool si non présent
 if ! zpool list -H -o name | grep -qx "$POOL"; then
-    sudo zpool import -N -o readonly=on "$POOL"
+    echo "📥 Import du pool $POOL..."
+    sudo zpool import "$POOL"
 fi
 
-# 2️⃣ Monte uniquement le dataset que tu veux utiliser
-sudo zfs mount backuppool/nas_backup/current
+# 2 Création du point de montage si nécessaire
+if [ ! -d "$DST" ]; then
+    echo "📁 Création du dossier de montage $DST..."
+    sudo mkdir -p "$DST"
+fi
 
-# 3️⃣ Vérifie le mountpoint
-mountpoint -q "$DST" || {
-    echo "ERROR: $DST is not mounted"
+# 3 Montage du dataset
+if ! zfs list -H -o mounted "$DATASET" | grep -qx "yes"; then
+    echo "🔧 Montage du dataset $DATASET..."
+    sudo zfs mount "$DATASET"
+fi
+
+# 4 Vérification
+if mountpoint -q "$DST"; then
+    echo "✅ Dataset monté sur $DST"
+else
+    echo "❌ ERREUR : $DST n'est pas monté"
     sudo zpool export "$POOL"
     exit 1
-}
+fi
 
-# 4️⃣ Affichage pour contrôle
+# 5 Affichage pour contrôle
+echo "🔹 État du pool :"
 zpool status "$POOL"
+echo
+echo "🔹 Datasets :"
 zfs list "$POOL"
+echo
+echo "🔹 Détails des mounts :"
 zfs list -o name,canmount,mounted,mountpoint
-zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppool backuppool/nas_backup/current
+echo
+echo "🔹 Options importantes :"
+zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata "$POOL" "$DATASET"
+
