@@ -45,4 +45,122 @@ zpcachyos/ROOT/cos@auto-2025-12-17_16-57
 sudo zfs rollback -r zpcachyos/ROOT/cos@auto-2025-12-17_17-06
 
 🟠 SCÉNARIO 2 — FORCE MAJEURE
+➜ Restauration COMPLETE depuis HDD USB (LiveCD)
+🎯 Cas typiques
+
+SSD mort
+pool zpcachyos corrompu
+disque remplacé
+machine qui ne boote plus du tout
+
+🧭 Étapes COMPLÈTES (LiveCD CachyOS)
+0️⃣ Pré-requis
+
+Nouveau SSD installé
+HDD USB branché (backuppool)
+LiveCD CachyOS
+
+1️⃣ Créer le pool sur le nouveau SSD
+$ lsblk 
+❯ lsblk
+NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sda           8:0    0 238,5G  0 disk 
+├─sda1        8:1    0     2G  0 part /boot
+└─sda2        8:2    0 236,5G  0 part 
+zram0       253:0    0   7,1G  0 disk [SWAP]
+nvme0n1     259:0    0 476,9G  0 disk 
+├─nvme0n1p1 259:1    0   100M  0 part 
+├─nvme0n1p2 259:2    0    16M  0 part 
+├─nvme0n1p3 259:3    0 476,1G  0 part 
+└─nvme0n1p4 259:4    0   744M  0 part 
+
+$ sudo -i
+$ zpool create -f -o ashift=12 zpcachyos /dev/nvme0n1
+
+=== Créer la structure minimale : ===
+$ zfs create zpcachyos/ROOT
+$ zfs create zpcachyos/ROOT/cos
+
+2️⃣ Importer le disque USB (readonly)
+$ zpool import -N -o readonly=on backuppool
+
+3️⃣ Choisir le snapshot à restaurer
+$ zfs list -t snapshot -r backuppool/cachyos_backup
+
+backuppool/cachyos_backup@auto-2025-12-16_23-48              0B      -    96K  -
+backuppool/cachyos_backup@auto-2025-12-16_23-57              0B      -    96K  -
+backuppool/cachyos_backup@auto-2025-12-17_00-25              0B      -    96K  -
+backuppool/cachyos_backup@auto-2025-12-17_00-26              0B      -    96K  -
+backuppool/cachyos_backup@auto-2025-12-17_16-57              0B      -    96K  -
+backuppool/cachyos_backup@auto-2025-12-17_17-01              0B      -    96K  -
+backuppool/cachyos_backup@auto-2025-12-17_17-03              0B      -    96K  -
+backuppool/cachyos_backup@auto-2025-12-17_17-06              0B      -    96K  -
+
+$ zfs send -R backuppool/cachyos_backup@auto-2025-12-17_17-06 \
+  | zfs receive -F zpcachyos/ROOT
+
+✔ restaure :
+/
+/home
+/var/cache
+/var/log
+propriétés ZFS
+sous-datasets
+
+5️⃣ Fixer les mountpoints
+$ zfs set mountpoint=/ zpcachyos/ROOT/cos/root
+$ zfs set mountpoint=/home zpcachyos/ROOT/cos/home
+$ zfs set mountpoint=/var/cache zpcachyos/ROOT/cos/varcache
+$ zfs set mountpoint=/var/log zpcachyos/ROOT/cos/varlog
+
+6️⃣ Monter et chroot
+$ zfs mount -a
+$ mount --rbind /dev /mnt/dev
+$ mount --rbind /proc /mnt/proc
+$ mount --rbind /sys /mnt/sys
+$ chroot /mnt
+
+7️⃣ Réinstaller le bootloader
+$ bootctl install
+$ mkinitcpio -P
+
+8️⃣ Rebooter
+$ exit
+$ reboot
+
+🧠 POINTS CRITIQUES À RETENIR
+✔ Le rollback local est instantané
+✔ Le send inverse est fiable même après des mois
+✔ LiveCD suffit, pas besoin du système installé
+✔ Aucun rsync système
+✔ Aucun montage automatique dangereux
+
+🟢 RÉSUMÉ ULTRA-COURT
+Problème logiciel → rollback snapshot local
+SSD mort          → zfs send depuis HDD USB
+USB occasionnel   → aucun souci
+
+
+                💥 PROBLÈME SYSTÈME 💥
+                        |
+        ┌───────────────┴───────────────┐
+        |                               |
+  SSD LISIBLE ?                    SSD MORT ?
+        |                               |
+       OUI                             NON
+        |                               |
+        v                               v
+┌────────────────┐           ┌────────────────────┐
+│ SNAPSHOT LOCAL │           │ BACKUP HDD USB ZFS │
+│ zpcachyos     │           │ backuppool          │
+└───────┬────────┘           └──────────┬─────────┘
+        |                               |
+        v                               v
+zfs rollback -r              zfs send | zfs receive
+zpcachyos/ROOT/cos@auto-*    backuppool → zpcachyos
+        |                               |
+        v                               v
+     reboot                       bootloader + reboot
+
+⏱ Minutes                         ⏱ 10–20 min
 
