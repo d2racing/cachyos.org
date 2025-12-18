@@ -7,6 +7,15 @@ $ modprobe zfs
 
 🧪 CAS 1 — ROLLBACK SNAPSHOT LOCAL (le plus simple)
 👉 Utilisez ce cas si mon pool interne zpcachyos est intact
+➜ Rollback via snapshot LOCAL (le plus rapide)
+🎯 Cas typiques
+
+pacman a cassé le système
+boot KO
+service critique HS
+kernel / initramfs brisé
+
+➡️ Le SSD est toujours lisible
 
 1️⃣ Importer le pool système
 $ zpool import
@@ -34,3 +43,6 @@ zpcachyos/ROOT/cos@auto-2025-12-17_16-57
 4️⃣ ⚠️ ROLLBACK (IRRÉVERSIBLE)
 
 sudo zfs rollback -r zpcachyos/ROOT/cos@auto-2025-12-17_17-06
+
+🟠 SCÉNARIO 2 — FORCE MAJEURE
+
