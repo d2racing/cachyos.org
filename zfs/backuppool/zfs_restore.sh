@@ -12,3 +12,4 @@ time rsync -a /mnt/backup/nas/current/.zfs/snapshot/$SNAP/photo/ /mnt/backup/nas
 zfs rollback -r backuppool/nas/current@snap-2025-12-12_02-00
 
 rsync -a /mnt/backup/nas/current/.zfs/snapshot/$SNAP/photo/ /tmp/restore-photo-test/
+
