@@ -25,3 +25,4 @@ done
 
 cp /mnt/backup/nas/current/.zfs/snapshot/$SNAP/photo/2023/vacances/img001.jpg \
 /mnt/nas/photo_restore/2023/vacances/
+
