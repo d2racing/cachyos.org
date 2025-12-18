@@ -24,6 +24,13 @@ $ zfs list
 
 3️⃣ Lister les snapshots disponibles
 
-$ zfs list -t snapshot | grep zpcachyos/ROOT/cos
+$ zfs list -t snapshot -r zpcachyos/ROOT/cos
+
+zpcachyos/ROOT/cos@auto-2025-12-17_17-06
+zpcachyos/ROOT/cos@auto-2025-12-17_17-03
+zpcachyos/ROOT/cos@auto-2025-12-17_17-01
+zpcachyos/ROOT/cos@auto-2025-12-17_16-57
 
 4️⃣ ⚠️ ROLLBACK (IRRÉVERSIBLE)
+
+sudo zfs rollback -r zpcachyos/ROOT/cos@auto-2025-12-17_17-06
