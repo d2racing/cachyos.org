@@ -1,13 +1,7 @@
 #!/bin/bash
 set -e  # Arrête le script si une commande échoue
 echo "=== Début de baseinstall_part3 ==="
-paru -S google-chrome 1password anydesk-bin discord signal-desktop 
-echo "=== Installation terminée avec succès ===
 
-~/scripts/cachyos.org/install main*
-❯ cat baseinstall_part3.sh
-#!/bin/bash
-echo "=== Début de baseinstall_part3 ==="
 echo "=== Activation du support HEVC / HEIF sous CachyOS + KDE ==="
 
 # Mise à jour
