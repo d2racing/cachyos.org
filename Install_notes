@@ -1,0 +1,28 @@
+$ sudo mkdir -p /mnt/NAS
+$ sudo mount -t cifs //xxx.xxx.xxx.xxx/shared_folder /mnt/NAS -o username=XXXX,password=XXXX,rw,iocharset=utf8,uid=1000,gid=1000
+$ sudo umount /mnt/NAS
+
+Suite à l'installation :
+
+1. $ cd /home/sylvain
+2. $ mkdir scripts
+3. $ cd scripts
+4. $ git clone https://github.com/d2racing/cachyos.org.git
+5. $ cd /home/sylvain/cachyos.org/install
+6. $ chmod +x *.sh
+7. $ cd /home/sylvain/cachyos.org/nas
+8. $ chmod +x *.sh
+9. $ cd /home/sylvain/cachyos.org/zfs/backuppool
+10. $ sudo chmod +x *.sh
+11. $ cd /home/sylvain/cachyos.org/zfs/zpcachyos
+12. $ sudo chmod +x *.sh
+
+13. $ cd /home/sylvain/cachyos.org/install
+14. $ sudo ./baseinstall_part1.sh
+15. $ ./baseinstall_part2.sh
+16. $ sudo ./baseinstall_part3.sh
+
+Test de vitesse SSD :
+1. $ sudo mkdir -p /mnt/ssd
+2. $ sudo fio --name=write --filename=/mnt/ssd/testfile --size=2G --bs=1M --rw=write --direct=1
+3. $ sudo fio --name=read --filename=/mnt/ssd/testfile --bs=1M --rw=read --direct=1
