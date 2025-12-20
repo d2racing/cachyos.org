@@ -8,19 +8,12 @@ Suite à l'installation :
 2. $ mkdir scripts
 3. $ cd scripts
 4. $ git clone https://github.com/d2racing/cachyos.org.git
-5. $ cd /home/sylvain/cachyos.org/install
-6. $ chmod +x *.sh
-7. $ cd /home/sylvain/cachyos.org/nas
-8. $ chmod +x *.sh
-9. $ cd /home/sylvain/cachyos.org/zfs/backuppool
-10. $ sudo chmod +x *.sh
-11. $ cd /home/sylvain/cachyos.org/zfs/zpcachyos
-12. $ sudo chmod +x *.sh
-
-13. $ cd /home/sylvain/cachyos.org/install
-14. $ sudo ./baseinstall_part1.sh
-15. $ ./baseinstall_part2.sh
-16. $ sudo ./baseinstall_part3.sh
+5. $ cd /home/sylvain/scripts/cachyos.org/
+6. $ find . -name "*.sh" -exec chmod +x {} \;
+7. $ cd /home/sylvain/scripts/cachyos.org/install/
+8. $ sudo ./baseinstall_part1.sh
+9. $ ./baseinstall_part2.sh
+10. $ sudo ./baseinstall_part3.sh
 
 Test de vitesse SSD :
 1. $ sudo mkdir -p /mnt/ssd
