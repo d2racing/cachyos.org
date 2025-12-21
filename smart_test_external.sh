@@ -45,3 +45,6 @@ echo
 echo "ℹ️  Le test long est en cours."
 echo "👉 Pour vérifier plus tard :"
 echo "   smartctl $SMART_OPTS -l selftest $DISK"
+
+echo "ℹ️  Un dernier stress test"
+sudo dd if=/dev/sdb of=/dev/null bs=1M status=progress
