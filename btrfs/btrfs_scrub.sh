@@ -35,12 +35,12 @@ echo
 
 echo "🧪 Démarrage du scrub Btrfs"
 echo "----------------------------------------"
-sudo btrfs scrub start -B "$MOUNTPOINT"
+btrfs scrub start -B "$MOUNTPOINT"
 
 echo
 echo "📄 Rapport du scrub"
 echo "----------------------------------------"
-sudo btrfs scrub status "$MOUNTPOINT"
+btrfs scrub status "$MOUNTPOINT"
 
 echo
 echo "✅ Scrub terminé avec succès"
