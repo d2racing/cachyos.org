@@ -19,9 +19,7 @@ echo ""
 if ! command -v smartctl &> /dev/null; then
     echo -e "${RED}Erreur: smartctl n'est pas installé${NC}"
     echo "Installation:"
-    echo "  Ubuntu/Debian: sudo apt-get install smartmontools"
-    echo "  Fedora/RHEL: sudo dnf install smartmontools"
-    echo "  Arch: sudo pacman -S smartmontools"
+    echo "  CachyOS sudo pacman -S smartmontools"
     exit 1
 fi
 
