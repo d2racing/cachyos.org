@@ -49,3 +49,4 @@ echo
 echo "📊 Résumé global :"
 echo "  🔥 Snapshots supprimés : $TOTAL_DELETED"
 echo "  ✅ Snapshots restants : $TOTAL_REMAINING"
+
