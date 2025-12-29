@@ -44,4 +44,4 @@ zfs list -o name,canmount,mounted,mountpoint
 echo
 echo "🔹 Options importantes :"
 zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata "$POOL" "$DATASET"
-
+zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppool/cachyos_backup
