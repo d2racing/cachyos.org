@@ -1,6 +1,6 @@
 zfs list -t snapshot
 
-backuppool/nas/current@snap-2025-12-12_02-00
+zpbackup/nas/current@snap-2025-12-12_02-00
 
 SNAP="snap-2025-12-12_02-00"
 
