@@ -4,8 +4,9 @@ set -euo pipefail
 ############################################
 # CONFIGURATION
 ############################################
+POOL="zpbackup"
 SRC_DATASET="zpcachyos/ROOT/cos"
-DST_DATASET="backuppool/cachyos_backup"
+DST_DATASET="$POOL/cachyos_backup"
 SNAP_PREFIX="auto-"
 RETENTION_KEEP=30     # Nombre de snapshots à conserver (SOURCE)
 
