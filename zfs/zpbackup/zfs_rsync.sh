@@ -15,7 +15,7 @@ SHARES=("CLONEZILLA" "DIVERS" "DONNEES" "homes" "LOGICIELS" "photo" "PHOTOSYNC" 
 NAS_MOUNT_BASE="/mnt/nas"
 BACKUP_ROOT="/mnt/backup/nas_backup"
 CURRENT="$BACKUP_ROOT/current"
-ZFS_DATASET="backuppool/nas_backup/current"
+ZFS_DATASET="zpbackup/nas_backup/current"
 
 DATE=$(date +%Y-%m-%d_%H-%M)
 SNAPNAME="auto-$DATE"  # uniformisation avec @auto
@@ -30,20 +30,20 @@ log() {
 }
 
 # --- CHECK ZFS POOL ---
-if ! zfs list backuppool >/dev/null 2>&1; then
-    log "❌ Pool ZFS backuppool indisponible"
+if ! zfs list zpbackup >/dev/null 2>&1; then
+    log "❌ Pool ZFS zpbackup indisponible"
     exit 1
 fi
 
 # --- MOUNT DATASET SAFELY ---
 log "Montage du dataset ZFS..."
-if [ "$(zfs get -H -o value mounted backuppool/nas_backup)" = "no" ]; then
-    if ! zfs mount backuppool/nas_backup >/dev/null 2>&1; then
-        log "❌ Échec montage ZFS du dataset backuppool/nas_backup"
+if [ "$(zfs get -H -o value mounted zpbackup/nas_backup)" = "no" ]; then
+    if ! zfs mount zpbackup/nas_backup >/dev/null 2>&1; then
+        log "❌ Échec montage ZFS du dataset zpbackup/nas_backup"
         exit 1
     fi
 else
-    log "Dataset backuppool/nas_backup déjà monté"
+    log "Dataset zpbackup/nas_backup déjà monté"
 fi
 
 # --- HARD MOUNTPOINT CHECK ---
