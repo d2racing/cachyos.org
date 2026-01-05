@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-POOL="backuppool"
+POOL="zpbackup"
 DATASET="$POOL/nas_backup/current"
 DST="/mnt/backup/nas_backup/current"
 
@@ -44,4 +44,4 @@ zfs list -o name,canmount,mounted,mountpoint
 echo
 echo "🔹 Options importantes :"
 zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata "$POOL" "$DATASET"
-zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppool/cachyos_backup
+zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata zpbackup/cachyos_backup
