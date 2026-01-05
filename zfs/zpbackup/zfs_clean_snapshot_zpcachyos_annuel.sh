@@ -5,7 +5,7 @@ set -euo pipefail
 # CONFIGURATION
 ############################################
 SRC_DATASET="zpcachyos/ROOT/cos"
-DST_POOL="backuppool"
+DST_POOL="zpbackup"
 DST_DATASET="${DST_POOL}/cachyos_backup"
 SNAP_PREFIX="auto-"
 
