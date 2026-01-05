@@ -1,51 +1,53 @@
 #!/bin/bash
+set -e
 
-DISK="/dev/sdb"
+DISK="/dev/disk/by-id/usb-WD_Elements_14TB_XXXX"
+POOL="zpbackup"
 
-wipefs -a $DISK
-sgdisk --zap-all $DISK
+echo "⚠️  DESTROYING ALL DATA ON $DISK"
+sleep 2
 
-# Création du pool
-zpool create -f -o ashift=12 backuppool $DISK
+wipefs -a "$DISK"
+sgdisk --zap-all "$DISK"
 
-# Création des datasets pour backup normal
-zfs create backuppool/nas_backup
-zfs create backuppool/nas_backup/current
+# Create pool
+zpool create -f -o ashift=12 "$POOL" "$DISK"
 
-zfs set mountpoint=/mnt/backup/nas_backup backuppool/nas_backup
-zfs set mountpoint=/mnt/backup/nas_backup/current backuppool/nas_backup/current
+# ---- Backup datasets ----
+zfs create "$POOL/nas_backup"
+zfs create "$POOL/nas_backup/current"
 
-# Création sécurisée des datasets pour snapshot de système (cachyos_backup)
-zfs create backuppool/cachyos_backup
-zfs create backuppool/cachyos_backup/current
-# Optionnel : si tu veux snapshotter /send
-zfs create backuppool/cachyos_backup/root
-zfs create backuppool/cachyos_backup/home
-zfs create backuppool/cachyos_backup/varcache
-zfs create backuppool/cachyos_backup/varlog
+zfs set mountpoint=/mnt/backup/nas_backup "$POOL/nas_backup"
+zfs set mountpoint=/mnt/backup/nas_backup/current "$POOL/nas_backup/current"
 
-# Sécurisation des datasets système : ne jamais monter automatiquement sur /
-sudo zfs set canmount=noauto backuppool/cachyos_backup/root
-sudo zfs set canmount=noauto backuppool/cachyos_backup/home
-sudo zfs set canmount=noauto backuppool/cachyos_backup/varcache
-sudo zfs set canmount=noauto backuppool/cachyos_backup/varlog
-sudo zfs set mountpoint=none backuppool/cachyos_backup
+# ---- System snapshot datasets (never auto-mounted) ----
+zfs create "$POOL/cachyos_backup"
+zfs set mountpoint=none "$POOL/cachyos_backup"
 
-# Optimisations HDD USB backup
-zfs set compression=zstd backuppool
-zfs set atime=off backuppool
-zfs set relatime=off backuppool
-zfs set xattr=sa backuppool
-zfs set redundant_metadata=most backuppool
-zfs set relatime=off backuppool/nas_backup/current
-zfs set xattr=sa backuppool
+zfs create "$POOL/cachyos_backup/current"
+zfs create "$POOL/cachyos_backup/root"
+zfs create "$POOL/cachyos_backup/home"
+zfs create "$POOL/cachyos_backup/varcache"
+zfs create "$POOL/cachyos_backup/varlog"
 
-# Optimisation débit séquentiel
-zfs set recordsize=1M backuppool
-zfs set recordsize=1M backuppool/nas_backup
-zfs set recordsize=1M backuppool/nas_backup/current
+zfs set canmount=noauto "$POOL/cachyos_backup/root"
+zfs set canmount=noauto "$POOL/cachyos_backup/home"
+zfs set canmount=noauto "$POOL/cachyos_backup/varcache"
+zfs set canmount=noauto "$POOL/cachyos_backup/varlog"
 
-# Vérification finale
-zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata backuppool backuppool/nas_backup/current
+# ---- HDD / USB backup tuning ----
+zfs set compression=zstd "$POOL"
+zfs set atime=off "$POOL"
+zfs set relatime=off "$POOL"
+zfs set xattr=sa "$POOL"
+zfs set redundant_metadata=most "$POOL"
 
-echo "WD Elements 14TB prêt pour backup ZFS ✔"
+zfs set recordsize=1M "$POOL"
+zfs set recordsize=1M "$POOL/nas_backup"
+zfs set recordsize=1M "$POOL/nas_backup/current"
+
+# ---- Verification ----
+zfs get compression,recordsize,atime,relatime,xattr,redundant_metadata \
+  "$POOL" "$POOL/nas_backup/current"
+
+echo "✅ WD Elements 14TB ready as ZFS backup pool ($POOL)"
