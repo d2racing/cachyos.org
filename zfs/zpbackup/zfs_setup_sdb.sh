@@ -21,6 +21,7 @@ zfs set mountpoint=/mnt/backup/nas_backup "$POOL/nas_backup"
 zfs set mountpoint=/mnt/backup/nas_backup/current "$POOL/nas_backup/current"
 
 # ---- System snapshot datasets (never auto-mounted) ----
+zfs set mountpoint=none "$POOL"
 zfs create "$POOL/cachyos_backup"
 zfs set mountpoint=none "$POOL/cachyos_backup"
 
