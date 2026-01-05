@@ -68,7 +68,7 @@ machine qui ne boote plus du tout
 🧭 Étapes COMPLÈTES (LiveCD CachyOS)
 0️⃣ Pré-requis
 Nouveau SSD installé
-HDD USB branché (backuppool)
+HDD USB branché (zpbackup)
 LiveCD CachyOS
 
 $ sudo -i
