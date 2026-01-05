@@ -105,21 +105,21 @@ $ zfs create zpcachyos/ROOT/cos
 
 🟠 ÉTAPE 3 — Restaurer depuis le HDD USB
 
-$ zpool import -N -o readonly=on backuppool
+$ zpool import -N -o readonly=on zpbackup
 
 === Choisir le snapshot à restaurer ===
-$ zfs list -t snapshot -r backuppool/cachyos_backup
+$ zfs list -t snapshot -r zpbackup/cachyos_backup
 
-backuppool/cachyos_backup@auto-2025-12-16_23-48              0B      -    96K  -
-backuppool/cachyos_backup@auto-2025-12-16_23-57              0B      -    96K  -
-backuppool/cachyos_backup@auto-2025-12-17_00-25              0B      -    96K  -
-backuppool/cachyos_backup@auto-2025-12-17_00-26              0B      -    96K  -
-backuppool/cachyos_backup@auto-2025-12-17_16-57              0B      -    96K  -
-backuppool/cachyos_backup@auto-2025-12-17_17-01              0B      -    96K  -
-backuppool/cachyos_backup@auto-2025-12-17_17-03              0B      -    96K  -
-backuppool/cachyos_backup@auto-2025-12-17_17-06              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-16_23-48              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-16_23-57              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-17_00-25              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-17_00-26              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-17_16-57              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-17_17-01              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-17_17-03              0B      -    96K  -
+zpbackup/cachyos_backup@auto-2025-12-17_17-06              0B      -    96K  -
 
-$ zfs send -R backuppool/cachyos_backup@auto-YYYY-MM-DD_HH-MM \
+$ zfs send -R zpbackup/cachyos_backup@auto-YYYY-MM-DD_HH-MM \
   | zfs receive -F -u zpcachyos/ROOT
 
 🟠 ÉTAPE 4 — Fixer les mountpoints
@@ -178,12 +178,12 @@ USB occasionnel   → aucun souci
         v                               v
 ┌────────────────┐           ┌────────────────────┐
 │ SNAPSHOT LOCAL │           │ BACKUP HDD USB ZFS │
-│ zpcachyos     │           │ backuppool          │
+│ zpcachyos      │           │ zpbackup           │
 └───────┬────────┘           └──────────┬─────────┘
         |                               |
         v                               v
 zfs rollback -r              zfs send | zfs receive
-zpcachyos/ROOT/cos@auto-*    backuppool → zpcachyos
+zpcachyos/ROOT/cos@auto-*    zpbackup   → zpcachyos
         |                               |
         v                               v
      reboot                       bootloader + reboot
