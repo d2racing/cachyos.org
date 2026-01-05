@@ -7,7 +7,7 @@
 
 set -o pipefail
 
-POOL="backuppool"
+POOL="zpbackup"
 DISK="/dev/sdb"
 
 # -------- Colors --------
