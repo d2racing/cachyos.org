@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-POOL="backuppool"
-DATASET="backuppool/nas_backup/current"
+POOL="zpbackup"
+DATASET="$POOL/nas_backup/current"
 
 # 1⃣ Démonte uniquement le dataset utilisé
 sudo zfs unmount "$DATASET"
