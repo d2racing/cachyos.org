@@ -6,7 +6,7 @@ set -euo pipefail
 ############################################
 # Nombre de snapshots @auto à garder par dataset (paramètre 1, défaut 5)
 KEEP_LAST=${1:-5}
-TARGET="backuppool/cachyos_backup"
+TARGET="zpbackup/cachyos_backup"
 
 echo "🧹 Nettoyage des snapshots @auto pour $TARGET (garder $KEEP_LAST derniers)..."
 
