@@ -146,16 +146,13 @@ else
     log "Aucun changement global — snapshot ZFS ignoré"
 fi
 
-# --- SNAPSHOT ROTATION (KEEP 30) ---
-log "Rotation des snapshots ZFS (garder 30)"
-SNAPS=$(zfs list -t snapshot -o name -s creation | grep "^$ZFS_DATASET@auto-")
+# --- SNAPSHOT ROTATION (KEEP 30 MOST RECENT) ---
+log "Rotation des snapshots ZFS (garder les 30 plus récents)"
 
-COUNT=0
-for snap in $SNAPS; do
-    COUNT=$((COUNT+1))
-    if [ "$COUNT" -le 30 ]; then
-        continue
-    fi
+zfs list -t snapshot -o name -s creation \
+| grep "^$ZFS_DATASET@auto-" \
+| head -n -30 \
+| while read -r snap; do
     log "🗑 Suppression ancien snapshot : $snap"
     zfs destroy "$snap"
 done
